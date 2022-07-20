@@ -1,4 +1,6 @@
+using ECommerceSite.API.Interface;
 using ECommerceSite.API.Persistence;
+using ECommerceSite.API.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -31,6 +33,7 @@ namespace ECommerceSite.API
             services.AddDbContext<ECommerceDbContext>(options => options.UseInMemoryDatabase("ECommerceDb"));
             services.AddMvc();
             services.AddControllers();
+            services.AddScoped<IProductsRepository, ProductRepository>();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ECommerceSite.API", Version = "v1" });

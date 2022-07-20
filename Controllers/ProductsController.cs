@@ -1,31 +1,33 @@
-﻿using ECommerceSite.API.Models;
+﻿using ECommerceSite.API.Interface;
+using ECommerceSite.API.Models;
 using ECommerceSite.API.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ECommerceSite.API.Controllers
 {
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly ECommerceDbContext _ecommerceDbContext;
+        private readonly IProductsRepository _iProductsRepository;
 
-        public ProductsController(ECommerceDbContext ecommerceDbContext)
+        public ProductsController(IProductsRepository ecommerceDbContext)
         {
-            _ecommerceDbContext = ecommerceDbContext;
+            _iProductsRepository = ecommerceDbContext;
         }
 
         [HttpGet]
         public IActionResult Get()
         {
-            var products = _ecommerceDbContext.Products.ToList();    
+            var products = _iProductsRepository.GetAllProducts();    
             return Ok(products);
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var product = _ecommerceDbContext.Products.SingleOrDefault(p => p.Id == id);
+            var product = await _iProductsRepository.GetProductById(id);
 
             if(product == null)
             {
@@ -36,7 +38,7 @@ namespace ECommerceSite.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] ProductInputModel productInputModel)
+        public async Task<IActionResult> Post([FromBody] ProductInputModel productInputModel)
         {
             if (productInputModel == null)
             {
@@ -45,50 +47,25 @@ namespace ECommerceSite.API.Controllers
 
             var product = new Product(productInputModel.Description, productInputModel.Price);
 
-            _ecommerceDbContext.Products.Add(product);
-            _ecommerceDbContext.SaveChanges();
+            await _iProductsRepository.AddAsync(product);
 
-            return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
+            return Ok();
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put([FromBody] ProductInputModel productInputModel, int id)
+        public async Task<IActionResult> Put(int id, ProductInputModel productInputModel)
         {
+            await _iProductsRepository.UpdateAsync(id, productInputModel);
 
-            if (productInputModel == null)
-            {
-                return BadRequest();
-            }
-
-            var product = _ecommerceDbContext.Products.SingleOrDefault(p => p.Id == id);
-
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            product.Descripition = productInputModel.Description;
-            product.Price = productInputModel.Price;
-
-            _ecommerceDbContext.SaveChanges();
-
-            return NoContent();
+            return Ok();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id) 
+        public async Task<IActionResult> Delete(int id)
         {
-            var product = _ecommerceDbContext.Products.SingleOrDefault(p => p.Id == id);
+            await _iProductsRepository.DeleteItem(id);
 
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            _ecommerceDbContext.Products.Remove(product);
-            _ecommerceDbContext.SaveChanges();
-
-            return NoContent();
+            return Ok();
         }
     }
 }
